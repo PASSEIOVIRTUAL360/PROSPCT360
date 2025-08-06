@@ -65,6 +65,7 @@ body.dark .footer {
   display: none;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 .modal {
   background: white;
@@ -72,6 +73,11 @@ body.dark .footer {
   border-radius: 8px;
   width: 90%;
   max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+.modal input, .modal label {
+  margin-top: 10px;
 }
 .modal button {
   margin-top: 10px;

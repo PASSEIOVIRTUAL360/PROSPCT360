@@ -1,9 +1,9 @@
+const { jsPDF } = window.jspdf;
+
 const catalogo = document.getElementById('catalogo');
 const totalSpan = document.getElementById('total');
 const descontoInput = document.getElementById('desconto');
-const modalResumo = document.getElementById('modal-resumo');
-const resumoItens = document.getElementById('resumo-itens');
-const resumoTotal = document.getElementById('resumo-total');
+const formModal = document.getElementById('formulario');
 
 const servicos = [
   { nome: "Tour Virtual 360°", preco: 800, icone: "📸" },
@@ -12,6 +12,16 @@ const servicos = [
 ];
 
 let selecionados = [];
+let logoBase64 = null;
+
+document.getElementById('upload-logo').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    logoBase64 = reader.result;
+  };
+  if (file) reader.readAsDataURL(file);
+});
 
 function renderCatalogo() {
   catalogo.innerHTML = "";
@@ -50,26 +60,75 @@ function calcularTotal() {
 
 descontoInput.oninput = calcularTotal;
 
-function abrirResumo() {
-  resumoItens.innerHTML = selecionados.map(i => {
-    const s = servicos[i];
-    return `<p>${s.nome} - R$ ${s.preco.toFixed(2)}</p>`;
-  }).join('');
-  resumoTotal.innerHTML = "<strong>Total com desconto:</strong> R$ " + totalSpan.textContent;
-  modalResumo.style.display = 'flex';
+function abrirFormulario() {
+  formModal.style.display = 'flex';
 }
 
-function fecharResumo() {
-  modalResumo.style.display = 'none';
+function fecharFormulario() {
+  formModal.style.display = 'none';
 }
 
 function gerarPDF() {
-  alert("Função de PDF será implementada em breve.");
-  fecharResumo();
+  const doc = new jsPDF();
+
+  const contratada = document.getElementById("contratada").value;
+  const contratante = document.getElementById("contratante").value;
+  const empresa = document.getElementById("empresa").value;
+  const contato = document.getElementById("contato").value;
+  const email = document.getElementById("email").value;
+  const local = document.getElementById("local").value;
+  const pagamento = document.getElementById("pagamento").value;
+  const validade = document.getElementById("validade").value;
+
+  if (logoBase64) {
+    doc.addImage(logoBase64, "PNG", 10, 10, 50, 20);
+  }
+
+  doc.setFontSize(14);
+  doc.text("Nossa Proposta Comercial", 70, 30);
+  doc.setFontSize(10);
+  doc.text(`CONTRATADA: ${contratada}`, 10, 50);
+  doc.text(`CONTRATANTE: ${contratante}`, 10, 58);
+  doc.text(`EMPRESA: ${empresa}`, 10, 66);
+  doc.text(`CONTATO: ${contato}`, 10, 74);
+  doc.text(`EMAIL: ${email}`, 10, 82);
+  doc.text(`LOCAL: ${local}`, 10, 90);
+  doc.text(`Validade da Proposta: ${validade} dias`, 10, 98);
+
+  doc.text("Resumo dos Serviços Selecionados:", 10, 110);
+  let y = 118;
+  let total = 0;
+
+  selecionados.forEach(i => {
+    const s = servicos[i];
+    doc.text(`${s.nome} - R$ ${s.preco.toFixed(2)}`, 12, y);
+    y += 8;
+    total += s.preco;
+  });
+
+  const desconto = parseFloat(descontoInput.value || 0);
+  const totalComDesconto = desconto > 0 ? total - (total * (desconto / 100)) : total;
+
+  y += 10;
+  doc.text(`Subtotal: R$ ${total.toFixed(2)}`, 10, y);
+  y += 8;
+  if (desconto > 0) {
+    doc.text(`Desconto: ${desconto}%`, 10, y);
+    y += 8;
+  }
+  doc.text(`Total Estimado: R$ ${totalComDesconto.toFixed(2)}`, 10, y);
+  y += 8;
+  doc.text(`Forma de Pagamento: ${pagamento}`, 10, y);
+
+  doc.setFontSize(8);
+  doc.text("Gerado com iAPNL – Catálogo de Serviços Profissionais", 10, 285);
+
+  doc.save("Nossa_Proposta_Comercial.pdf");
+  fecharFormulario();
 }
 
 function editar(index) {
-  alert("Edição em desenvolvimento: " + servicos[index].nome);
+  alert("Edição em breve: " + servicos[index].nome);
 }
 
 document.getElementById('theme-toggle').onclick = () => {
